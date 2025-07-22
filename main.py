@@ -55,6 +55,7 @@ while True and iteration_count < MAX_ITERATIONS:
         # We call the tool and pass the arguments
         result = functions[tool_name](**tool_arguments)
 
+        # Whe the LLM calls the 'submit_final_response', we exit the loop
         if tool_name == "submit_final_response":
             break
 
