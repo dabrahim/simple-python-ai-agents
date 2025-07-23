@@ -2,3 +2,6 @@ myenv
 .env
 .idea
 __pycache__
+.mypy_cache
+sandbox
+resources
