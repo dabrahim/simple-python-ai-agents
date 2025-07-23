@@ -1,7 +1,67 @@
-myenv
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+myenv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment variables
 .env
-.idea
-__pycache__
-.mypy_cache
-sandbox
-resources
+.env.local
+.env.*.local
+projects/*/.env
+
+# IDE
+.vscode/launch.json
+.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Miscellaneous
+notes-md/
