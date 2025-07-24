@@ -40,7 +40,7 @@ def submit_final_response(message: str) -> None:
     print(message)
 
 
-tools: List[Dict] = [
+tools_definition: List[Dict] = [
     {
         "type": "function",
         "function": {

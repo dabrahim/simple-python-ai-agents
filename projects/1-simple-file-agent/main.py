@@ -5,7 +5,8 @@ from openai.types.chat import ChatCompletion, ChatCompletionMessageToolCall
 from dotenv import load_dotenv
 
 from llm import get_completion
-from tools import list_files, read_file, write_file, append_to_file, ask_for_clarification, submit_final_response
+from tools import list_files, read_file, write_file, append_to_file, ask_for_clarification, submit_final_response, \
+    tools_definition
 
 load_dotenv()
 
@@ -41,9 +42,9 @@ while True and iteration_count < MAX_ITERATIONS:
     iteration_count += 1
 
     # Call the llm and retrieve the next tool call
-    completion: ChatCompletion = get_completion(messages)
+    completion: ChatCompletion = get_completion(messages, tools_definition)
 
-    # Wa parse the response to make sure it's a proper tool call
+    # We parse the response to make sure it's a proper tool call
     if completion.choices[0].finish_reason == "tool_calls" and completion.choices[0].message.tool_calls:
         tool_call: ChatCompletionMessageToolCall = completion.choices[0].message.tool_calls[0]
         tool_name = tool_call.function.name

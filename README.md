@@ -39,19 +39,3 @@ cp .env.example .env
 # Edit .env with your API keys
 python main.py
 ```
-
-### Adding new projects
-```bash
-# Create project folder
-mkdir projects/my-new-agent
-cd projects/my-new-agent
-
-# Set up virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Create basic files
-touch main.py requirements.txt .env.example README.md
-
-# Start coding!
-```
