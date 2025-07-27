@@ -3,9 +3,13 @@
 A basic AI agent that can interact with files through function calls.
 
 ## Description
-This agent uses OpenAI's function calling to perform file operations like listing, reading, writing, and appending to files. It's designed as a simple command-line interface that processes user requests and executes appropriate file operations.
+
+This agent uses OpenAI's function calling to perform file operations like listing, reading, writing, and appending to
+files. It's designed as a simple command-line interface that processes user requests and executes appropriate file
+operations.
 
 ## Features
+
 - List files in a directory
 - Read file contents
 - Write new files
@@ -14,6 +18,7 @@ This agent uses OpenAI's function calling to perform file operations like listin
 - Command-line interface
 
 ## Setup
+
 1. Create and activate a virtual environment
 2. Install dependencies: `pip install -r requirements.txt`
 3. Set up your `.env` file with:
@@ -25,6 +30,7 @@ This agent uses OpenAI's function calling to perform file operations like listin
 4. Run: `python main.py`
 
 ## Files
+
 - `main.py` - Main application loop
 - `llm.py` - OpenAI client wrapper
 - `tools.py` - File operation functions and tool definitions

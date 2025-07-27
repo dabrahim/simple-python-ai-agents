@@ -4,9 +4,6 @@ from typing import Dict, List
 
 
 class Memory:
-    __memory_folder_path: str
-    __chat_history_file_path: str
-
     __DEFAULT_MEMORY_FOLDER: str = ".memory"
     __DEFAULT_CHAT_HISTORY_FILE_NAME: str = "chat-history.json"
 

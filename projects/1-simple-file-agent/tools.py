@@ -37,8 +37,18 @@ def ask_for_clarification(message: str) -> str:
     return input(f"{message} \n")
 
 
-def submit_final_response(message: str) -> None:
+def submit_final_response(message: str) -> str | None:
+    print(f"\n{"*" * 20}")
+    print("AGENT RESPONSE")
+    print(f"\n{"*" * 20}")
     print(message)
+
+    should_continue = input("\nDo you need help with something else?\nAnswer (y/n)>> ")
+    if should_continue.lower() in ("y", "yes"):
+        follow_up_message: str = input("\nHow can I help you?\nYou>> ")
+        return follow_up_message
+    else:
+        return None
 
 
 tools_definition: List[Dict] = [
