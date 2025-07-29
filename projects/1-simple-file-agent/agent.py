@@ -7,8 +7,8 @@ from openai.types.chat.chat_completion import Choice
 
 from llm import get_completion
 from memory import Memory
-from tools import read_file, list_files, write_file, append_to_file, ask_for_clarification, submit_final_response
-from typing import List, Dict
+from agent_tool_service import AgentToolService
+from utils import read_file
 
 load_dotenv()
 
@@ -18,9 +18,10 @@ class Agent:
     # TODO : Implement proper memory (i.e save user preferences)
     # messages: list = memory.load_chat_history()
 
-    def __init__(self, tools: List[Dict], max_iterations: int = 10):
-        self.tools = tools
+    def __init__(self, tool_service: AgentToolService, max_iterations: int = 10):
+        self.tool_service: AgentToolService = tool_service
         self.MAX_ITERATIONS: int = max_iterations
+
         # self.memory: Memory = Memory()
 
         self.SYSTEM_PROMPT: str = read_file("system-prompt.md")
@@ -31,17 +32,6 @@ class Agent:
             }
         ]
 
-        # TODO : Move this declaration to a new class (An action class to encapsulate all tools + definition + calling)
-        self.functions: dict = {
-            "list_files": list_files,
-            "read_file": read_file,
-            "write_file": write_file,
-            "append_to_file": append_to_file,
-            "ask_for_clarification": ask_for_clarification,
-            "submit_final_response": submit_final_response
-        }
-
-    # TODO : Handle edge cases : http errors, llm refusal and miscellaneous errors
     def run(self, task: str):
         iteration_count: int = 0
 
@@ -54,7 +44,10 @@ class Agent:
             iteration_count += 1
 
             # Call the llm and retrieve the next tool call
-            completion: ChatCompletion = get_completion(self.messages, self.tools)  # TODO : Monitor tokens count
+            # TODO : Handle edge cases : http errors, llm refusal and miscellaneous errors
+            # TODO : Monitor tokens count
+            completion: ChatCompletion = get_completion(self.messages,
+                                                        self.tool_service.get_tools_definition())
 
             print(f"\n{"*" * 20}")
             print(completion)
@@ -62,20 +55,23 @@ class Agent:
             first_completion_choice: Choice = completion.choices[0]
 
             # We parse the response to make sure it's a proper tool call
+            # TODO : Wrap this inside a new class
             if first_completion_choice.finish_reason == "tool_calls" and first_completion_choice.message.tool_calls:
                 # We add the tool call to the messages history
                 self.messages.append(completion.choices[0].message.to_dict())
 
                 # We retrieve the tool name & arguments
                 tool_call: ChatCompletionMessageToolCall = first_completion_choice.message.tool_calls[0]
-                tool_name = tool_call.function.name
-                tool_arguments = json.loads(tool_call.function.arguments)
+                tool_name: str = tool_call.function.name
+                tool_arguments: dict = json.loads(tool_call.function.arguments)
+                tool_call_id: str = tool_call.id
 
                 print(f"\n{"*" * 20}")
                 print(f"Tool called: {tool_name}")
+                print(f"Tool arguments: {tool_arguments}")
 
                 # We call the tool and pass the arguments
-                tool_call_result = self.functions[tool_name](**tool_arguments)
+                tool_call_result = self.tool_service.invoke(tool_name, tool_arguments)
 
                 print(f"\n{"*" * 20}")
                 print(f"Tool call result: {type(tool_call_result)} — {str(tool_call_result)}")
@@ -84,7 +80,7 @@ class Agent:
                 # TODO : If it's a file read, count the number of tokens and make sure it can fit inside the content window
                 self.messages.append({
                     "role": "tool",
-                    "tool_call_id": tool_call.id,
+                    "tool_call_id": tool_call_id,
                     "content": str(tool_call_result)
                 })
 
