@@ -7,7 +7,7 @@ from openai.types.chat.chat_completion import Choice
 
 from llm import get_completion
 from memory import Memory
-from agent_tool_service import AgentToolService
+from contracts.tools.tool_service_contract import ToolServiceContract
 from utils import read_file
 
 load_dotenv()
@@ -18,8 +18,8 @@ class Agent:
     # TODO : Implement proper memory (i.e save user preferences)
     # messages: list = memory.load_chat_history()
 
-    def __init__(self, tool_service: AgentToolService, max_iterations: int = 10):
-        self.tool_service: AgentToolService = tool_service
+    def __init__(self, tool_service: ToolServiceContract, max_iterations: int = 10):
+        self.tool_service: ToolServiceContract = tool_service
         self.MAX_ITERATIONS: int = max_iterations
 
         # self.memory: Memory = Memory()
