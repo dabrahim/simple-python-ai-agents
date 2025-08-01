@@ -1,8 +1,7 @@
-import json
 import os
 from typing import List, Dict, Any
 
-from contracts.tools.tool_service_contract import ToolServiceContract
+from src.contracts.tools.tool_service_contract import ToolServiceContract
 
 
 class AgentToolService(ToolServiceContract):
@@ -59,9 +58,9 @@ class AgentToolService(ToolServiceContract):
 
     @staticmethod
     def __submit_final_response(message: str) -> str | None:
-        print(f"\n{"*" * 20}")
+        print(f"\n{'*' * 20}")
         print("AGENT RESPONSE")
-        print(f"\n{"*" * 20}")
+        print(f"\n{'*' * 20}")
         print(message)
 
         should_continue = input("\nDo you need help with something else?\nAnswer (y/n)>> ")
