@@ -8,6 +8,7 @@ from src.models.tool_call_request import ToolCallRequest
 
 from openai.types.chat.chat_completion import Choice
 
+from src.services.memory_service import MemoryService
 from src.utils.file_utils import read_file
 
 load_dotenv()
@@ -27,6 +28,8 @@ class LlmService:
             }
         ]
 
+        self.__memory: MemoryService = MemoryService()
+
     def get_next_tool_call(self) -> ToolCallRequest:
         # TODO : Handle edge cases : http errors, llm refusal and miscellaneous errors
         # TODO : Monitor tokens count
@@ -42,7 +45,7 @@ class LlmService:
         # If it's a tool call, extract all the details and return them
         if first_completion_choice.finish_reason == "tool_calls" and first_completion_choice.message.tool_calls:
             # We add the tool call to the messages history
-            self.messages.append(first_completion_choice.message.to_dict())
+            self.__push_message(first_completion_choice.message.to_dict())
 
             # We retrieve the tool name & arguments
             tool_call: ChatCompletionMessageToolCall = first_completion_choice.message.tool_calls[0]
@@ -66,15 +69,18 @@ class LlmService:
             raise Exception(f"Unknown completion: {first_completion_choice}")
 
     def push_user_message(self, message: str) -> None:
-        self.messages.append({
+        self.__push_message({
             "role": "user",
             "content": message
         })
-        # return self.__get_completion()
 
     def push_tool_response(self, tool_id: str, tool_call_result: Any) -> None:
-        self.messages.append({
+        self.__push_message({
             "role": "tool",
             "tool_call_id": tool_id,
             "content": str(tool_call_result)
         })
+
+    def __push_message(self, message: dict) -> None:
+        self.messages.append(message)
+        self.__memory.save_chat_history(self.messages)
