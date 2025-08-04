@@ -1,8 +1,15 @@
-from agent import Agent
-from tools import tools_definition
+import os
+from src.core.agent import Agent
+from src.services.tool_service import AgentToolService
 
-task: str = input('Hi there! How can I help you? \nYou>> ')
-# message: str = "What's inside my current folder?"
+model: str | None = os.getenv('OPEN_AI_MODEL_NAME')
 
-agent: Agent = Agent(tools_definition)
-agent.run(task)
+if model is None:
+    raise ValueError('No model provided in the environment')
+
+agent: Agent = Agent(tool_service=AgentToolService(), model=model)
+task: str = input("Hi there! How can I help you? \nYou>> ")
+
+while task not in ('exit', 'quit'):
+    agent.run(task)
+    task = input('[ "quit" to exit ]>>> ').strip()
