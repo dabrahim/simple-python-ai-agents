@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import os
 
 from src.models.tool_call_response import ToolCallResult
 from src.services.llm_service import LlmService
@@ -11,18 +10,14 @@ load_dotenv()
 
 class Agent:
 
-    # TODO : Implement proper memory (i.e save user preferences)
-    # messages: list = memory.load_chat_history()
-
-    def __init__(self, tool_service: ToolServiceContract, model: str, max_iterations: int = 10):
+    def __init__(self, tool_service: ToolServiceContract, model: str, max_iterations: int = 20):
         self.__tool_service: ToolServiceContract = tool_service
         self.__MAX_ITERATIONS: int = max_iterations
 
         self.__llm_service: LlmService = LlmService(
             model=model,
-            tools=self.__tool_service.get_tools_definition()
+            tools_definition=self.__tool_service.get_tools_definition()
         )
-        # self.memory: Memory = Memory()
 
     def run(self, task: str):
         iteration_count: int = 0
@@ -50,17 +45,6 @@ class Agent:
                 tool_call_result=tool_call_result.content
             )
 
-            # self.memory.save_chat_history(self.messages)
-
-            # if tool_call_request.tool_name == "submit_final_response":
-            #    # If the user has a follow-up message, we add it to the conversation history
-            #    if tool_call_result is not None:
-            #        self.__llm_service.push_user_message(message=str(tool_call_result))
-
-            # We reset the iteration count
-            #        iteration_count = 0
-            #    else:
-            #        break  # The user doesn't have a follow-up question — we end it here
-
+            # If this is the final function call, we exit the loop
             if tool_call_result.is_last:
                 break
