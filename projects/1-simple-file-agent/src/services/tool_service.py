@@ -1,3 +1,4 @@
+import json
 import os
 from typing import List, Dict, Any
 
@@ -14,7 +15,9 @@ class AgentToolService(ToolServiceContract):
             "write_file": self.__write_file,
             "append_to_file": self.__append_to_file,
             "ask_for_clarification": self.__ask_for_clarification,
-            "submit_final_response": self.__submit_final_response
+            "submit_final_response": self.__submit_final_response,
+            "update_memories": self.__update_memories,
+            "load_memories": self.__load_memories
         }
 
     def invoke(self, tool_name: str, tool_args: dict) -> ToolCallResult:
@@ -57,15 +60,17 @@ class AgentToolService(ToolServiceContract):
 
     @staticmethod
     def __ask_for_clarification(message: str) -> ToolCallResult:
-        response: str = input(f"{message} \n")
+        print(f"\n{'*' * 20}")
+        print('Asking for clarification...\n')
+        response: str = input(f"{message} \n\nResponse: ")
         return ToolCallResult(content=response)
 
     @staticmethod
     def __submit_final_response(message: str) -> ToolCallResult:
         print(f"\n{'*' * 20}")
-        print("AGENT RESPONSE")
-        print(f"\n{'*' * 20}")
+        print("AGENT RESPONSE\n")
         print(message)
+        print(f"{'*' * 20}")
 
         # should_continue = input("\nDo you need help with something else?\nAnswer (y/n)>> ")
         # if should_continue.lower() in ("y", "yes"):
@@ -74,6 +79,29 @@ class AgentToolService(ToolServiceContract):
         # else:
         #    return None, False
         return ToolCallResult(exit_loop=True)
+
+    @staticmethod
+    def __update_memories(memories: List[str]) -> ToolCallResult:
+        memory_folder: str = ".memory"
+        memory_file: str = ".memory/preferences.json"
+        
+        # Create memory folder if it doesn't exist
+        if not os.path.exists(memory_folder):
+            os.makedirs(memory_folder)
+            
+        with open(memory_file, 'w') as f:
+            json.dump(memories, f, indent=2)
+        return ToolCallResult(content="Memories updated successfully")
+
+    @staticmethod
+    def __load_memories() -> ToolCallResult:
+        memory_file: str = ".memory/preferences.json"
+        if os.path.exists(memory_file):
+            with open(memory_file, 'r') as f:
+                memories = json.load(f)
+                return ToolCallResult(content=memories)
+        else:
+            return ToolCallResult(content=[])
 
     def get_tools_definition(self) -> List[Dict]:
         tools_definition: List[Dict] = [
@@ -194,6 +222,41 @@ class AgentToolService(ToolServiceContract):
                             }
                         },
                         "required": ["message"],
+                        "additionalProperties": False
+                    },
+                    "strict": True
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_memories",
+                    "description": "COMPLETELY REPLACE all stored memories with new list. WARNING: This overwrites ALL existing memories. You must include existing memories you want to keep plus any new ones.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "memories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "COMPLETE list of ALL memories to store (existing + new). This will replace everything previously stored."
+                            }
+                        },
+                        "required": ["memories"],
+                        "additionalProperties": False
+                    },
+                    "strict": True
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "load_memories",
+                    "description": "Load previously saved user preferences and memories",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
                         "additionalProperties": False
                     },
                     "strict": True

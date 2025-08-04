@@ -3,7 +3,7 @@ import os
 from typing import Dict, List
 
 
-class MemoryService:
+class ChatHistoryService:
     __DEFAULT_MEMORY_FOLDER: str = ".memory"
     __DEFAULT_CHAT_HISTORY_FILE_NAME: str = "chat-history.json"
 

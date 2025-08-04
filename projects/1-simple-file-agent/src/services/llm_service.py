@@ -8,17 +8,17 @@ from src.models.tool_call_request import ToolCallRequest
 
 from openai.types.chat.chat_completion import Choice
 
-from src.services.memory_service import MemoryService
+from src.services.memory_service import ChatHistoryService
 from src.utils.file_utils import read_file
 
 load_dotenv()
 
 
 class LlmService:
-    def __init__(self, model: str, tools: list):
+    def __init__(self, model: str, tools_definition: list):
         self.__client: OpenAI = OpenAI()
         self.model = model
-        self.tools = tools
+        self.tools_definition = tools_definition
 
         self.__SYSTEM_PROMPT: str = read_file("system-prompt.md")
         self.messages: list = [
@@ -28,7 +28,7 @@ class LlmService:
             }
         ]
 
-        self.__memory: MemoryService = MemoryService()
+        self.__memory: ChatHistoryService = ChatHistoryService()
 
     def get_next_tool_call(self) -> ToolCallRequest:
         # TODO : Handle edge cases : http errors, llm refusal and miscellaneous errors
@@ -36,7 +36,7 @@ class LlmService:
         completion: ChatCompletion = self.__client.chat.completions.create(
             model=self.model,
             messages=self.messages,
-            tools=self.tools,
+            tools=self.tools_definition,
         )
 
         first_completion_choice: Choice = completion.choices[0]
