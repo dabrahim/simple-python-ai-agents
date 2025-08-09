@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from src.models.tool_call_response import ToolCallResult
 from src.services.llm_service import LlmService
 from src.contracts.tool_service_interface import ToolServiceInterface
+from src.contracts.logger_interface import LoggerInterface
+from src.services.console_logger_service import ConsoleLoggerService
 from src.models.tool_call_request import ToolCallRequest
 
 load_dotenv()
@@ -10,17 +12,21 @@ load_dotenv()
 
 class Agent:
 
-    def __init__(self, tool_service: ToolServiceInterface, model: str, max_iterations: int = 20):
+    def __init__(self, tool_service: ToolServiceInterface, model: str, max_iterations: int = 20, logger: LoggerInterface = None):
         self.__tool_service: ToolServiceInterface = tool_service
         self.__MAX_ITERATIONS: int = max_iterations
+        self.__logger = logger or ConsoleLoggerService()
 
         self.__llm_service: LlmService = LlmService(
             model=model,
-            tools_definition=self.__tool_service.get_tools_definition()
+            tools_definition=self.__tool_service.get_tools_definition(),
+            logger=self.__logger
         )
 
     def run(self, task: str):
         iteration_count: int = 0
+        
+        self.__logger.log("Starting task processing...", log_type='progress')
 
         # We add the user request to the messages stack
         self.__llm_service.push_user_message(message=task)
@@ -35,8 +41,7 @@ class Agent:
                 tool_call=tool_call_request,
             )
 
-            print(f"\n{'*' * 20}")
-            print(f"Tool call result: {type(tool_call_result.content)} — {str(tool_call_result.content)}")
+            self.__logger.log("", log_type='tool_result', content=tool_call_result.content)
 
             # We push the tool call response
             self.__llm_service.push_tool_response(

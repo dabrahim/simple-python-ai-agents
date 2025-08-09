@@ -2,19 +2,22 @@ from typing import List, Dict, Any
 
 from src.contracts.tool_service_interface import ToolServiceInterface
 from src.contracts.communication_interface import CommunicationInterface
+from src.contracts.logger_interface import LoggerInterface
 from src.models.tool_call_request import ToolCallRequest
 from src.models.tool_call_response import ToolCallResult
 from src.services.file_operations_service import FileOperationsService
 from src.services.console_communication_service import ConsoleCommunicationService
+from src.services.console_logger_service import ConsoleLoggerService
 from src.services.memory_service import MemoryService
 
 
 class AgentToolService(ToolServiceInterface):
 
-    def __init__(self, communication_service: CommunicationInterface = None) -> None:
+    def __init__(self, communication_service: CommunicationInterface = None, logger: LoggerInterface = None) -> None:
         self.__file_service = FileOperationsService()
-        self.__communication_service = communication_service or ConsoleCommunicationService()
-        self.__memory_service = MemoryService()
+        self.__logger = logger or ConsoleLoggerService()
+        self.__communication_service = communication_service or ConsoleCommunicationService(self.__logger)
+        self.__memory_service = MemoryService(self.__logger)
         self.__tools_mapping: dict = {
             "list_files": self.__list_files,
             "read_file": self.__read_file,
@@ -36,7 +39,7 @@ class AgentToolService(ToolServiceInterface):
         try:
             return self.__tools_mapping[tool_name](**tool_args)
         except TypeError as error:
-            print(f"Tool call failed {tool_name}: {error}")
+            self.__logger.log(f"Tool call failed {tool_name}: {error}", log_type='error')
             raise Exception("Invalid tool arguments")
 
     def __list_files(self, path: str) -> ToolCallResult:

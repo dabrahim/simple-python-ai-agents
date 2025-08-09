@@ -9,16 +9,19 @@ from src.models.tool_call_request import ToolCallRequest
 from openai.types.chat.chat_completion import Choice
 
 from src.services.memory_service import MemoryService
+from src.contracts.logger_interface import LoggerInterface
+from src.services.console_logger_service import ConsoleLoggerService
 from src.utils.file_utils import read_file
 
 load_dotenv()
 
 
 class LlmService:
-    def __init__(self, model: str, tools_definition: list):
+    def __init__(self, model: str, tools_definition: list, logger: LoggerInterface = None):
         self.__client: OpenAI = OpenAI()
         self.model = model
         self.tools_definition = tools_definition
+        self.__logger = logger or ConsoleLoggerService()
 
         self.__SYSTEM_PROMPT: str = read_file("system-prompt.md")
         self.messages: list = [
@@ -28,7 +31,7 @@ class LlmService:
             }
         ]
 
-        self.__memory: MemoryService = MemoryService()
+        self.__memory: MemoryService = MemoryService(self.__logger)
 
     def get_next_tool_call(self) -> ToolCallRequest:
         # TODO : Handle edge cases : http errors, llm refusal and miscellaneous errors
@@ -54,9 +57,7 @@ class LlmService:
             tool_arguments: dict = json.loads(tool_call.function.arguments)
             tool_call_id: str = tool_call.id
 
-            print(f"\n{'*' * 20}")
-            print(f"Tool called: {tool_name}")
-            print(f"Tool arguments: {tool_arguments}")
+            self.__logger.log("", log_type='tool_call', tool_name=tool_name, tool_args=tool_arguments)
 
             return ToolCallRequest(
                 tool_name=tool_name,

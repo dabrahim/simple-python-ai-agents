@@ -2,6 +2,8 @@ import json
 import os
 from typing import Dict, List
 from src.services.file_operations_service import FileOperationsService
+from src.contracts.logger_interface import LoggerInterface
+from src.services.console_logger_service import ConsoleLoggerService
 
 
 class MemoryService:
@@ -14,8 +16,9 @@ class MemoryService:
     __DEFAULT_CHAT_HISTORY_FILE_NAME: str = "chat-history.json"
     __DEFAULT_PREFERENCES_FILE_NAME: str = "preferences.json"
 
-    def __init__(self) -> None:
+    def __init__(self, logger: LoggerInterface = None) -> None:
         self.__file_service = FileOperationsService()
+        self.__logger = logger or ConsoleLoggerService()
         self.__memory_folder_path = os.getenv('MEMORY_FOLDER') or self.__DEFAULT_MEMORY_FOLDER
 
         # Set up file paths
@@ -32,7 +35,7 @@ class MemoryService:
             history_content = json.dumps(chat_messages, indent=2)
             self.__file_service.write_file(self.__chat_history_file_path, history_content)
         except Exception as e:
-            print(f"Warning: Failed to save chat history: {e}")
+            self.__logger.log(f"Failed to save chat history: {e}", log_type='error')
 
     def load_chat_history(self) -> List[Dict]:
         """Load conversation history from file."""
@@ -43,7 +46,7 @@ class MemoryService:
             else:
                 return []
         except (json.JSONDecodeError, Exception) as e:
-            print(f"Warning: Failed to load chat history: {e}")
+            self.__logger.log(f"Failed to load chat history: {e}", log_type='error')
             return []
 
     # User Preferences Operations
