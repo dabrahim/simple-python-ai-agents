@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 
 from src.models.tool_call_response import ToolCallResult
 from src.services.llm_service import LlmService
-from src.contracts.tools.tool_service_contract import ToolServiceContract
+from src.contracts.tool_service_interface import ToolServiceInterface
 from src.models.tool_call_request import ToolCallRequest
 
 load_dotenv()
@@ -10,8 +10,8 @@ load_dotenv()
 
 class Agent:
 
-    def __init__(self, tool_service: ToolServiceContract, model: str, max_iterations: int = 20):
-        self.__tool_service: ToolServiceContract = tool_service
+    def __init__(self, tool_service: ToolServiceInterface, model: str, max_iterations: int = 20):
+        self.__tool_service: ToolServiceInterface = tool_service
         self.__MAX_ITERATIONS: int = max_iterations
 
         self.__llm_service: LlmService = LlmService(
@@ -32,8 +32,7 @@ class Agent:
 
             # We call the tool and pass the arguments
             tool_call_result: ToolCallResult = self.__tool_service.invoke(
-                tool_name=tool_call_request.tool_name,
-                tool_args=tool_call_request.tool_arguments
+                tool_call=tool_call_request,
             )
 
             print(f"\n{'*' * 20}")

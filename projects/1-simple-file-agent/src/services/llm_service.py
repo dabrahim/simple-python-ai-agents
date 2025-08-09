@@ -8,7 +8,7 @@ from src.models.tool_call_request import ToolCallRequest
 
 from openai.types.chat.chat_completion import Choice
 
-from src.services.memory_service import ChatHistoryService
+from src.services.memory_service import MemoryService
 from src.utils.file_utils import read_file
 
 load_dotenv()
@@ -28,7 +28,7 @@ class LlmService:
             }
         ]
 
-        self.__memory: ChatHistoryService = ChatHistoryService()
+        self.__memory: MemoryService = MemoryService()
 
     def get_next_tool_call(self) -> ToolCallRequest:
         # TODO : Handle edge cases : http errors, llm refusal and miscellaneous errors
