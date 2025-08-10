@@ -15,10 +15,10 @@ load_dotenv()
 
 
 class LlmService:
-    def __init__(self, model: str, tools: list):
+    def __init__(self, model: str, tools_definition: list):
         self.__client: OpenAI = OpenAI()
         self.model = model
-        self.tools = tools
+        self.tools_definition = tools_definition
 
         self.__SYSTEM_PROMPT: str = read_file("system-prompt.md")
         self.messages: list = [
@@ -36,7 +36,7 @@ class LlmService:
         completion: ChatCompletion = self.__client.chat.completions.create(
             model=self.model,
             messages=self.messages,
-            tools=self.tools,
+            tools=self.tools_definition,
         )
 
         first_completion_choice: Choice = completion.choices[0]

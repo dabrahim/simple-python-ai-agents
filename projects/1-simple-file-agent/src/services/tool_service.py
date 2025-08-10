@@ -1,23 +1,35 @@
-import os
 from typing import List, Dict, Any
 
-from src.contracts.tools.tool_service_contract import ToolServiceContract
+from src.contracts.tool_service_interface import ToolServiceInterface
+from src.contracts.communication_interface import CommunicationInterface
+from src.models.tool_call_request import ToolCallRequest
 from src.models.tool_call_response import ToolCallResult
+from src.services.file_operations_service import FileOperationsService
+from src.services.console_communication_service import ConsoleCommunicationService
+from src.services.memory_service import MemoryService
 
 
-class AgentToolService(ToolServiceContract):
+class AgentToolService(ToolServiceInterface):
 
-    def __init__(self) -> None:
+    def __init__(self, communication_service: CommunicationInterface = None) -> None:
+        self.__file_service = FileOperationsService()
+        self.__communication_service = communication_service or ConsoleCommunicationService()
+        self.__memory_service = MemoryService()
         self.__tools_mapping: dict = {
             "list_files": self.__list_files,
             "read_file": self.__read_file,
             "write_file": self.__write_file,
             "append_to_file": self.__append_to_file,
             "ask_for_clarification": self.__ask_for_clarification,
-            "submit_final_response": self.__submit_final_response
+            "submit_final_response": self.__submit_final_response,
+            "update_memories": self.__save_user_preferences,
+            "load_memories": self.__load_user_preferences
         }
 
-    def invoke(self, tool_name: str, tool_args: dict) -> ToolCallResult:
+    def invoke(self, tool_call: ToolCallRequest) -> ToolCallResult:
+        tool_name: str = tool_call.tool_name
+        tool_args: dict = tool_call.tool_arguments
+
         if tool_name not in self.__tools_mapping:
             raise Exception(f'Tool {tool_name} not found.')
 
@@ -27,53 +39,78 @@ class AgentToolService(ToolServiceContract):
             print(f"Tool call failed {tool_name}: {error}")
             raise Exception("Invalid tool arguments")
 
-    @staticmethod
-    def __list_files(path: str) -> ToolCallResult:
-        result = []
-        for name in os.listdir(path):
-            full_path = os.path.join(path, name)
-            if os.path.isdir(full_path):
-                result.append(f"[DIR] {name}")  # Mark directories
-            else:
-                result.append(f"     {name}")  # Plain files
-        return ToolCallResult(content=result)
+    def __list_files(self, path: str) -> ToolCallResult:
+        try:
+            result = self.__file_service.list_files(path)
+            return ToolCallResult(content=result)
+        except FileNotFoundError:
+            return ToolCallResult(content=f"Error: Directory '{path}' not found")
+        except PermissionError:
+            return ToolCallResult(content=f"Error: Permission denied to access '{path}'")
+        except Exception as e:
+            return ToolCallResult(content=f"Error listing files: {str(e)}")
 
-    @staticmethod
-    def __read_file(path: str) -> ToolCallResult:
-        with open(path, 'r') as f:
-            return ToolCallResult(content=f.read())
+    def __read_file(self, path: str) -> ToolCallResult:
+        try:
+            content = self.__file_service.read_file(path)
+            return ToolCallResult(content=content)
+        except FileNotFoundError:
+            return ToolCallResult(content=f"Error: File '{path}' not found")
+        except PermissionError:
+            return ToolCallResult(content=f"Error: Permission denied to read '{path}'")
+        except UnicodeDecodeError:
+            return ToolCallResult(
+                content=f"Error: Cannot read '{path}' - file may be binary or use unsupported encoding")
+        except Exception as e:
+            return ToolCallResult(content=f"Error reading file: {str(e)}")
 
-    @staticmethod
-    def __write_file(path: str, content: str) -> ToolCallResult:
-        with open(path, 'w') as f:
-            f.write(content)
-        return ToolCallResult(exit_loop=False)
+    def __write_file(self, path: str, content: str) -> ToolCallResult:
+        try:
+            self.__file_service.write_file(path, content)
+            return ToolCallResult(content=f"Successfully wrote to '{path}'")
+        except PermissionError:
+            return ToolCallResult(content=f"Error: Permission denied to write to '{path}'")
+        except Exception as e:
+            return ToolCallResult(content=f"Error writing file: {str(e)}")
 
-    @staticmethod
-    def __append_to_file(path: str, content: str) -> ToolCallResult:
-        with open(path, 'a') as f:
-            f.write(content)
-        return ToolCallResult(exit_loop=False)
+    def __append_to_file(self, path: str, content: str) -> ToolCallResult:
+        try:
+            self.__file_service.append_to_file(path, content)
+            return ToolCallResult(content=f"Successfully appended to '{path}'")
+        except PermissionError:
+            return ToolCallResult(content=f"Error: Permission denied to write to '{path}'")
+        except Exception as e:
+            return ToolCallResult(content=f"Error appending to file: {str(e)}")
 
-    @staticmethod
-    def __ask_for_clarification(message: str) -> ToolCallResult:
-        response: str = input(f"{message} \n")
-        return ToolCallResult(content=response)
+    def __ask_for_clarification(self, message: str) -> ToolCallResult:
+        try:
+            response = self.__communication_service.ask_user(message)
+            return ToolCallResult(content=response)
+        except Exception as e:
+            return ToolCallResult(content=f"Error getting user input: {str(e)}")
 
-    @staticmethod
-    def __submit_final_response(message: str) -> ToolCallResult:
-        print(f"\n{'*' * 20}")
-        print("AGENT RESPONSE")
-        print(f"\n{'*' * 20}")
-        print(message)
+    def __submit_final_response(self, message: str) -> ToolCallResult:
+        try:
+            self.__communication_service.respond_to_user(message)
+            return ToolCallResult(exit_loop=True)
+        except Exception as e:
+            return ToolCallResult(content=f"Error displaying response: {str(e)}")
 
-        # should_continue = input("\nDo you need help with something else?\nAnswer (y/n)>> ")
-        # if should_continue.lower() in ("y", "yes"):
-        #    follow_up_message: str = input("\nHow can I help you?\nYou>> ")
-        #    return follow_up_message, True
-        # else:
-        #    return None, False
-        return ToolCallResult(exit_loop=True)
+    def __save_user_preferences(self, memories: List[str]) -> ToolCallResult:
+        """Save user preferences/memories using the memory service."""
+        try:
+            self.__memory_service.save_user_preferences(memories)
+            return ToolCallResult(content=f"User preferences saved successfully. Total preferences: {len(memories)}")
+        except Exception as e:
+            return ToolCallResult(content=f"Error saving user preferences: {str(e)}")
+
+    def __load_user_preferences(self) -> ToolCallResult:
+        """Load user preferences/memories using the memory service."""
+        try:
+            preferences = self.__memory_service.load_user_preferences()
+            return ToolCallResult(content=preferences)
+        except Exception as e:
+            return ToolCallResult(content=f"Error loading user preferences: {str(e)}")
 
     def get_tools_definition(self) -> List[Dict]:
         tools_definition: List[Dict] = [
@@ -194,6 +231,41 @@ class AgentToolService(ToolServiceContract):
                             }
                         },
                         "required": ["message"],
+                        "additionalProperties": False
+                    },
+                    "strict": True
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_memories",
+                    "description": "COMPLETELY REPLACE all stored memories with new list. WARNING: This overwrites ALL existing memories. You must include existing memories you want to keep plus any new ones.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "memories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "COMPLETE list of ALL memories to store (existing + new). This will replace everything previously stored."
+                            }
+                        },
+                        "required": ["memories"],
+                        "additionalProperties": False
+                    },
+                    "strict": True
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "load_memories",
+                    "description": "Load previously saved user preferences and memories",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
                         "additionalProperties": False
                     },
                     "strict": True
