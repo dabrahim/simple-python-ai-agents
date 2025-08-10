@@ -39,7 +39,7 @@ class AgentToolService(ToolServiceInterface):
         try:
             return self.__tools_mapping[tool_name](**tool_args)
         except TypeError as error:
-            self.__logger.log(f"Tool call failed {tool_name}: {error}", log_type='error')
+            self.__logger.log_error(f"Tool call failed {tool_name}: {error}")
             raise Exception("Invalid tool arguments")
 
     def __list_files(self, path: str) -> ToolCallResult:

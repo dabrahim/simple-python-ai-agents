@@ -26,7 +26,7 @@ class Agent:
     def run(self, task: str):
         iteration_count: int = 0
         
-        self.__logger.log("Starting task processing...", log_type='progress')
+        self.__logger.log_progress("Starting task processing...")
 
         # We add the user request to the messages stack
         self.__llm_service.push_user_message(message=task)
@@ -41,7 +41,7 @@ class Agent:
                 tool_call=tool_call_request,
             )
 
-            self.__logger.log("", log_type='tool_result', content=tool_call_result.content)
+            self.__logger.log_tool_result(tool_call_result.content)
 
             # We push the tool call response
             self.__llm_service.push_tool_response(

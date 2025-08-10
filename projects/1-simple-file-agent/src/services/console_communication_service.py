@@ -28,7 +28,7 @@ class ConsoleCommunicationService(CommunicationInterface):
         Returns:
             User's response from console input
         """
-        self.__logger.log('Asking for clarification...', log_type='progress')
+        self.__logger.log_progress('Asking for clarification...')
         response: str = input(f"\n❓ {message} \n\nResponse: ")
         return response
 
@@ -39,4 +39,4 @@ class ConsoleCommunicationService(CommunicationInterface):
         Args:
             message: Final response message to display
         """
-        self.__logger.log(message, log_type='agent_response')
+        self.__logger.log_agent_response(message)

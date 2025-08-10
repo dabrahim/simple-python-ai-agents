@@ -1,59 +1,33 @@
 from src.contracts.logger_interface import LoggerInterface
+from typing import Dict, Any
 import json
 
 
 class ConsoleLoggerService(LoggerInterface):
     """
-    Enhanced console logger with improved visual formatting for AI agent interactions.
-    Provides clear, hierarchical output with appropriate visual emphasis.
+    Console implementation of specialized AI agent logging.
+    Provides clear, hierarchical output with professional visual formatting.
     """
 
-    def __init__(self):
-        """Initialize console logger with improved formatting."""
-        self.max_content_length = 100  # Max chars before ellipsizing
-
-    def log(self, message: str, **kwargs) -> None:
+    def __init__(self, max_content_length: int = 100):
         """
-        Display enhanced formatted messages based on message type.
+        Initialize console logger.
         
         Args:
-            message: The message to display
-            **kwargs: Formatting options:
-                - log_type: 'tool_call', 'tool_result', 'agent_response', 'user_prompt', 'progress', 'error'
-                - tool_name: Name of tool being called
-                - tool_args: Tool arguments dict
-                - content: Content to display (will be ellipsized if too long)
-                - show_separator: Override separator behavior
+            max_content_length: Maximum characters before content is truncated
         """
-        log_type = kwargs.get('log_type', 'default')
-        
-        if log_type == 'tool_call':
-            self._log_tool_call(kwargs.get('tool_name', ''), kwargs.get('tool_args', {}))
-        elif log_type == 'tool_result':
-            self._log_tool_result(kwargs.get('content', ''))
-        elif log_type == 'agent_response':
-            self._log_agent_response(message)
-        elif log_type == 'user_prompt':
-            self._log_user_prompt(message)
-        elif log_type == 'progress':
-            self._log_progress(message)
-        elif log_type == 'error':
-            self._log_error(message)
-        else:
-            # Default simple logging
-            print(f"  {message}")
+        self.max_content_length = max_content_length
 
-    def _log_tool_call(self, tool_name: str, tool_args: dict) -> None:
-        """Log tool call with clean formatting."""
+    def log_tool_call(self, tool_name: str, tool_args: Dict[str, Any] = None) -> None:
+        """Log tool call with clean formatting and truncated arguments."""
         print(f"\n🔧 Calling: {tool_name}")
         if tool_args:
-            # Format args nicely, truncate if too long
             args_str = json.dumps(tool_args, indent=None, separators=(',', ':'))
             if len(args_str) > 60:
                 args_str = args_str[:57] + "..."
             print(f"   └─ Args: {args_str}")
 
-    def _log_tool_result(self, content: str) -> None:
+    def log_tool_result(self, content: Any) -> None:
         """Log tool result with ellipsizing for long content."""
         content_str = str(content)
         
@@ -64,7 +38,7 @@ class ConsoleLoggerService(LoggerInterface):
             print(f"   ✓ Result: {truncated}")
             print(f"   └─ ({len(content_str)} chars total)")
 
-    def _log_agent_response(self, message: str) -> None:
+    def log_agent_response(self, message: str) -> None:
         """Log final agent response with clear visual separation."""
         print(f"\n{'=' * 60}")
         print(f"🤖 AGENT RESPONSE")
@@ -72,14 +46,14 @@ class ConsoleLoggerService(LoggerInterface):
         print(f"{message}")
         print(f"{'=' * 60}\n")
 
-    def _log_user_prompt(self, message: str) -> None:
-        """Log user interaction prompts."""
-        print(f"\n❓ {message}")
-
-    def _log_progress(self, message: str) -> None:
-        """Log progress/status updates."""
+    def log_progress(self, message: str) -> None:
+        """Log progress/status updates with hourglass icon."""
         print(f"⏳ {message}")
 
-    def _log_error(self, message: str) -> None:
+    def log_error(self, message: str) -> None:
         """Log errors with clear visual indication."""
         print(f"❌ Error: {message}")
+
+    def log_user_prompt(self, message: str) -> None:
+        """Log user interaction prompts with question mark icon."""
+        print(f"\n❓ {message}")

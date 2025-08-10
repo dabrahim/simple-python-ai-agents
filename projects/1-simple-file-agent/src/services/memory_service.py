@@ -35,7 +35,7 @@ class MemoryService:
             history_content = json.dumps(chat_messages, indent=2)
             self.__file_service.write_file(self.__chat_history_file_path, history_content)
         except Exception as e:
-            self.__logger.log(f"Failed to save chat history: {e}", log_type='error')
+            self.__logger.log_error(f"Failed to save chat history: {e}")
 
     def load_chat_history(self) -> List[Dict]:
         """Load conversation history from file."""
@@ -46,7 +46,7 @@ class MemoryService:
             else:
                 return []
         except (json.JSONDecodeError, Exception) as e:
-            self.__logger.log(f"Failed to load chat history: {e}", log_type='error')
+            self.__logger.log_error(f"Failed to load chat history: {e}")
             return []
 
     # User Preferences Operations

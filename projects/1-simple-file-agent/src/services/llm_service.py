@@ -57,7 +57,7 @@ class LlmService:
             tool_arguments: dict = json.loads(tool_call.function.arguments)
             tool_call_id: str = tool_call.id
 
-            self.__logger.log("", log_type='tool_call', tool_name=tool_name, tool_args=tool_arguments)
+            self.__logger.log_tool_call(tool_name, tool_arguments)
 
             return ToolCallRequest(
                 tool_name=tool_name,
