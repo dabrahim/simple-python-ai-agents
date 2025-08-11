@@ -21,14 +21,12 @@ class MemoryService:
         self.__logger = logger or ConsoleLoggerService()
         self.__memory_folder_path = os.getenv('MEMORY_FOLDER') or self.__DEFAULT_MEMORY_FOLDER
 
-        # Set up file paths
         history_file_name: str = os.getenv('CHAT_HISTORY_FILE') or self.__DEFAULT_CHAT_HISTORY_FILE_NAME
         preferences_file_name: str = os.getenv('PREFERENCES_FILE') or self.__DEFAULT_PREFERENCES_FILE_NAME
 
         self.__chat_history_file_path = os.path.join(self.__memory_folder_path, history_file_name)
         self.__preferences_file_path = os.path.join(self.__memory_folder_path, preferences_file_name)
 
-    # Chat History Operations
     def save_chat_history(self, chat_messages: List[Dict]) -> None:
         """Save conversation history to file."""
         try:
@@ -49,12 +47,8 @@ class MemoryService:
             self.__logger.log_error(f"Failed to load chat history: {e}")
             return []
 
-    # User Preferences Operations
     def save_user_preferences(self, preferences: List[str]) -> None:
-        """
-        Save user preferences/memories to file.
-        Completely replaces existing preferences.
-        """
+        """Save user preferences/memories to file. Completely replaces existing preferences."""
         try:
             preferences_content = json.dumps(preferences, indent=2)
             self.__file_service.write_file(self.__preferences_file_path, preferences_content)
@@ -62,10 +56,7 @@ class MemoryService:
             raise Exception(f"Failed to save user preferences: {e}")
 
     def load_user_preferences(self) -> List[str]:
-        """
-        Load user preferences/memories from file.
-        Returns empty list if no preferences exist.
-        """
+        """Load user preferences/memories from file. Returns empty list if no preferences exist."""
         try:
             if self.__file_service.file_exists(self.__preferences_file_path):
                 content = self.__file_service.read_file(self.__preferences_file_path)

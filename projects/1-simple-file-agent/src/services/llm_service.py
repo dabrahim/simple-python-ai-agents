@@ -45,17 +45,32 @@ class LlmService:
         first_completion_choice: Choice = completion.choices[0]
 
         # Check whether the response is a tool call
-        # If it's a tool call, extract all the details and return them
         if first_completion_choice.finish_reason == "tool_calls" and first_completion_choice.message.tool_calls:
-            # We add the tool call to the messages history
-            self.__push_message(first_completion_choice.message.to_dict())
-
-            # We retrieve the tool name & arguments
+            # Get the first tool call only (enforce one tool per turn)
             tool_call: ChatCompletionMessageToolCall = first_completion_choice.message.tool_calls[0]
 
             tool_name: str = tool_call.function.name
             tool_arguments: dict = json.loads(tool_call.function.arguments)
             tool_call_id: str = tool_call.id
+
+            # Create assistant message with ONLY the first tool call
+            assistant_message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": tool_call_id,
+                        "type": "function",
+                        "function": {
+                            "name": tool_name,
+                            "arguments": tool_call.function.arguments
+                        }
+                    }
+                ]
+            }
+            
+            # Add the single tool call message to history
+            self.__push_message(assistant_message)
 
             self.__logger.log_tool_call(tool_name, tool_arguments)
 
