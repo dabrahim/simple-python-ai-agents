@@ -12,7 +12,7 @@ class ConsoleLoggerService(LoggerInterface):
     def __init__(self, max_content_length: int = 100):
         self.max_content_length = max_content_length
 
-    def log_tool_call(self, tool_name: str, tool_args: Dict[str, Any] = None) -> None:
+    def log_tool_call(self, tool_name: str, tool_args: Dict[str, Any] | None = None) -> None:
         print(f"\n🔧 Calling: {tool_name}")
         if tool_args:
             args_str = json.dumps(tool_args, indent=None, separators=(',', ':'))
@@ -22,7 +22,7 @@ class ConsoleLoggerService(LoggerInterface):
 
     def log_tool_result(self, content: Any) -> None:
         content_str = str(content)
-        
+
         if len(content_str) <= self.max_content_length:
             print(f"   ✓ Result: {content_str}")
         else:

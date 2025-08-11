@@ -17,7 +17,7 @@ load_dotenv()
 
 
 class LlmService:
-    def __init__(self, model: str, tools_definition: list, logger: LoggerInterface = None):
+    def __init__(self, model: str, tools_definition: list, logger: LoggerInterface | None = None):
         self.__client: OpenAI = OpenAI()
         self.model = model
         self.tools_definition = tools_definition
@@ -68,7 +68,7 @@ class LlmService:
                     }
                 ]
             }
-            
+
             # Add the single tool call message to history
             self.__push_message(assistant_message)
 

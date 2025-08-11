@@ -9,7 +9,7 @@ class ConsoleCommunicationService(CommunicationInterface):
     Handles user interaction through standard input/output with proper formatting.
     """
 
-    def __init__(self, logger: LoggerInterface = None):
+    def __init__(self, logger: LoggerInterface | None = None):
         self.__logger = logger or ConsoleLoggerService()
 
     def ask_user(self, message: str) -> str:

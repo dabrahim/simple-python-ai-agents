@@ -9,7 +9,7 @@ class LoggerInterface(ABC):
     """
 
     @abstractmethod
-    def log_tool_call(self, tool_name: str, tool_args: Dict[str, Any] = None) -> None:
+    def log_tool_call(self, tool_name: str, tool_args: Dict[str, Any] | None = None) -> None:
         """Log when a tool is being called."""
         pass
 
