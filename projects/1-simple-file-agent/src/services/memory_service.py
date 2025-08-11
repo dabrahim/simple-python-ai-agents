@@ -16,7 +16,7 @@ class MemoryService:
     __DEFAULT_CHAT_HISTORY_FILE_NAME: str = "chat-history.json"
     __DEFAULT_PREFERENCES_FILE_NAME: str = "preferences.json"
 
-    def __init__(self, logger: LoggerInterface = None) -> None:
+    def __init__(self, logger: LoggerInterface | None = None) -> None:
         self.__file_service = FileOperationsService()
         self.__logger = logger or ConsoleLoggerService()
         self.__memory_folder_path = os.getenv('MEMORY_FOLDER') or self.__DEFAULT_MEMORY_FOLDER

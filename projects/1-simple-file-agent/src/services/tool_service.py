@@ -13,7 +13,8 @@ from src.services.memory_service import MemoryService
 
 class AgentToolService(ToolServiceInterface):
 
-    def __init__(self, communication_service: CommunicationInterface = None, logger: LoggerInterface = None) -> None:
+    def __init__(self, communication_service: CommunicationInterface | None = None,
+                 logger: LoggerInterface | None = None) -> None:
         self.__file_service = FileOperationsService()
         self.__logger = logger or ConsoleLoggerService()
         self.__communication_service = communication_service or ConsoleCommunicationService(self.__logger)

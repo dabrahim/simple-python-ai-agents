@@ -13,7 +13,7 @@ load_dotenv()
 class Agent:
 
     def __init__(self, tool_service: ToolServiceInterface, model: str, max_iterations: int = 20,
-                 logger: LoggerInterface = None):
+                 logger: LoggerInterface | None = None):
         self.__tool_service: ToolServiceInterface = tool_service
         self.__MAX_ITERATIONS: int = max_iterations
         self.__logger = logger or ConsoleLoggerService()
