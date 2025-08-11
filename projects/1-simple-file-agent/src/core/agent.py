@@ -12,7 +12,8 @@ load_dotenv()
 
 class Agent:
 
-    def __init__(self, tool_service: ToolServiceInterface, model: str, max_iterations: int = 20, logger: LoggerInterface = None):
+    def __init__(self, tool_service: ToolServiceInterface, model: str, max_iterations: int = 20,
+                 logger: LoggerInterface = None):
         self.__tool_service: ToolServiceInterface = tool_service
         self.__MAX_ITERATIONS: int = max_iterations
         self.__logger = logger or ConsoleLoggerService()
@@ -25,7 +26,7 @@ class Agent:
 
     def run(self, task: str):
         iteration_count: int = 0
-        
+
         self.__logger.log_progress("Starting task processing...")
 
         # We add the user request to the messages stack
@@ -36,10 +37,20 @@ class Agent:
 
             tool_call_request: ToolCallRequest = self.__llm_service.get_next_tool_call()
 
-            # We call the tool and pass the arguments
-            tool_call_result: ToolCallResult = self.__tool_service.invoke(
-                tool_call=tool_call_request,
-            )
+            # We call the tool and catch any exceptions to feed back to the LLM
+            try:
+                tool_call_result: ToolCallResult = self.__tool_service.invoke(
+                    tool_call=tool_call_request,
+                )
+            except Exception as e:
+                error_message = f"Tool execution failed: {str(e)}"
+                self.__logger.log_error(error_message)
+
+                # Create error result to feed back to LLM
+                tool_call_result = ToolCallResult(
+                    content=error_message,
+                    exit_loop=False
+                )
 
             self.__logger.log_tool_result(tool_call_result.content)
 
@@ -50,5 +61,5 @@ class Agent:
             )
 
             # If this is the final function call, we exit the loop
-            if tool_call_result.is_last:
+            if tool_call_result.exit_loop:
                 break
