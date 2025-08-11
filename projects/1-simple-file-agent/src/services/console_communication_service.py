@@ -1,35 +1,23 @@
 from src.contracts.communication_interface import CommunicationInterface
+from src.contracts.logger_interface import LoggerInterface
+from src.services.console_logger_service import ConsoleLoggerService
 
 
 class ConsoleCommunicationService(CommunicationInterface):
     """
     Console-based implementation of user communication.
-    Handles user interaction through standard input/output.
+    Handles user interaction through standard input/output with proper formatting.
     """
 
+    def __init__(self, logger: LoggerInterface = None):
+        self.__logger = logger or ConsoleLoggerService()
+
     def ask_user(self, message: str) -> str:
-        """
-        Ask user for input via console with formatted prompt.
-        
-        Args:
-            message: Question or prompt to show the user
-            
-        Returns:
-            User's response from console input
-        """
-        print(f"\n{'*' * 20}")
-        print('Asking for clarification...\n')
-        response: str = input(f"{message} \n\nResponse: ")
+        """Ask user for input via console."""
+        self.__logger.log_progress('Asking for clarification...')
+        response: str = input(f"\n❓ {message} \n\nResponse: ")
         return response
 
     def respond_to_user(self, message: str) -> None:
-        """
-        Display formatted response to user via console.
-        
-        Args:
-            message: Final response message to display
-        """
-        print(f"\n{'*' * 20}")
-        print("AGENT RESPONSE\n")
-        print(message)
-        print(f"{'*' * 20}")
+        """Display response to user via console."""
+        self.__logger.log_agent_response(message)
