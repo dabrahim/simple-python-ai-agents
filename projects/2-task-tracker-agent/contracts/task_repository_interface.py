@@ -20,3 +20,7 @@ class TaskRepository(ABC):
     @abstractmethod
     def get_all(self) -> List[Task]:
         pass
+
+    @abstractmethod
+    def find_by_id(self, task_id: int) -> Task:
+        pass

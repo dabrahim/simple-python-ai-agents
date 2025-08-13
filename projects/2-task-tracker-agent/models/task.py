@@ -1,9 +1,10 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class Task:
-    id: int
     title: str
     description: str
     done: bool = False
+    id: Optional[int] = None
