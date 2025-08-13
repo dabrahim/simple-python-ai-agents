@@ -36,7 +36,7 @@ class MessageUser(BaseTool):
     message: str
 
     def execute(self) -> Any:
-        print(self.message)
+        print(f"\n{self.message}")
         user_input = input(f"\nYou: ")
         return f"User input: {user_input}"
 

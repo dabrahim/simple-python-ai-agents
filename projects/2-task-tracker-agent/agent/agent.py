@@ -1,116 +1,65 @@
-import json
+from agent.contracts.llm_interface import LLMInterface
+from agent.events import Event, EventType
+from agent.llm import OpenAILLM
+from typing import Optional
 
-from dotenv import load_dotenv
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
-
-from agent.llm import LlmAction
-
-load_dotenv()
+from models.llm_models import LlmAction
 
 
 class Agent:
-    def __init__(self) -> None:
-        self._SYSTEM_PROMPT = "You are a Tasky, an AI agent that helps the user better organize their tasks by calling tools. When you are done, message the user with a message to display them."
+    def __init__(self, llm: Optional[LLMInterface] = None) -> None:
+        system_prompt: str = "You are a Tasky, an AI agent that helps the user better organize their tasks by calling tools. When you are done, message the user with a message to display them."
 
-        self._messages: list[dict[str, str]] = [
-            {
-                "role": "system",
-                "content": self._SYSTEM_PROMPT,
-            }
+        self._events: list[Event] = [
+            Event(type=EventType.SYSTEM_MESSAGE, content=system_prompt)
         ]
 
-    def run(self, message: str):
-        # TODO : Push the user message to the event stack
-        self._messages.append({"role": "user", "content": message})
+        # Dependency injection for LLM
+        self._llm = llm or OpenAILLM()
 
-        client: OpenAI = OpenAI()
+    @staticmethod
+    def print_title(message: str):
+        message_length = len(message)
+        dots: str = "•" * (message_length + 4)
+        print(f"\n{dots}\n• {message} •\n{dots}")
+
+    def run(self, message: str):
+        self._events.append(Event(type=EventType.USER_MESSAGE, content=message))
 
         iteration: int = 0
 
         while True and iteration < 5:
             iteration += 1
 
-            print(f"\n\n{"*" * 20}")
-            print(f"Iteration: {iteration}")
-            print(f"{"*" * 20}")
+            # self.print_title(f"Iteration: {iteration}")
 
-            completion = client.chat.completions.parse(
-                model="gpt-4.1-2025-04-14",
-                messages=self._messages,  # type: ignore
-                response_format=LlmAction
-            )
+            try:
+                # Use LLM to infer next action
+                llm_action: LlmAction = self._llm.infer_next_action(self._events)
 
-            # self._log_completion(completion)
+                # Add tool call to events
+                self._events.append(Event(type=EventType.TOOL_CALL, content=llm_action))
 
-            # choices: list[Choice] = completion.choices
-            llm_action: LlmAction | None = completion.choices[0].message.parsed
-
-            if llm_action:
-                # TODO: push the tool call to events stack (TOOL_CALL) or consider including reasoning and make it (ASSISTANT_MESSAGE)
-                print(f"Reasoning : {llm_action.reasoning}")
-
-                self._messages.append({
-                    "role": "assistant",
-                    "content": f"Tool call : {llm_action.model_dump_json()}",
-                })
+                # print(f"Reasoning : {llm_action.reasoning}")
+                self.print_title("REASONING")
+                print(f"{llm_action.reasoning}\n")
 
                 tool_call = llm_action.tool_call
 
-                print(f"Tool call type: {type(tool_call)}")
-                print(f"Tool call : {tool_call}")
+                self.print_title("TOOL CALL")
+                print(f"Type: {type(tool_call)}")
+                print(f"Object : {tool_call}")
 
-                tool_result = tool_call.execute()
+                try:
+                    tool_result = tool_call.execute()
+                    # Add successful tool result to events
+                    self._events.append(Event(type=EventType.TOOL_RESULT, content=tool_result))
+                except Exception as e:
+                    # Add tool error to events
+                    self._events.append(Event(type=EventType.TOOL_ERROR, content=str(e)))
 
-                # TODO: Push tool call result to events stack
-                self._messages.append({
-                    "role": "system",
-                    "content": f"Tool '{tool_call.name}' executed successfully. Result: {tool_result}"
-                })
-
-            else:
-                raise Exception("Parsed response is null : No tool call found")
-
-    @staticmethod
-    def _log_completion(completion: ChatCompletion) -> None:
-        print(json.dumps(completion.to_dict(), indent=2))
-
-        # sample api response
-        """
-        {
-          "id": "<…>",
-          "choices": [
-            {
-              "finish_reason": "stop",
-              "index": 0,
-              "logprobs": null,
-              "message": {
-                "content": "Task: Go to the grocery store  \nWhen: Tomorrow afternoon\n\nWould you like to set a specific time, or add a shopping list for your grocery trip?",
-                "refusal": null,
-                "role": "assistant",
-                "annotations": []
-              }
-            }
-          ],
-          "created": 1755094512,
-          "model": "gpt-4.1-2025-04-14",
-          "object": "chat.completion",
-          "service_tier": "default",
-          "system_fingerprint": "<…>",
-          "usage": {
-            "completion_tokens": 32,
-            "prompt_tokens": 39,
-            "total_tokens": 71,
-            "completion_tokens_details": {
-              "accepted_prediction_tokens": 0,
-              "audio_tokens": 0,
-              "reasoning_tokens": 0,
-              "rejected_prediction_tokens": 0
-            },
-            "prompt_tokens_details": {
-              "audio_tokens": 0,
-              "cached_tokens": 0
-            }
-          }
-        }
-        """
+            except Exception as e:
+                # Add system error to events
+                self._events.append(Event(type=EventType.SYSTEM_ERROR, content=str(e)))
+                print(f"System error: {e}")
+                break

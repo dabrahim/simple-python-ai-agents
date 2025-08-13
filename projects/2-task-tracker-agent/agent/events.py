@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Any
 
 
 class EventType(Enum):
+    SYSTEM_MESSAGE = auto()
     USER_MESSAGE = auto()
     ASSISTANT_MESSAGE = auto()
     TOOL_CALL = auto()
@@ -14,10 +16,4 @@ class EventType(Enum):
 @dataclass
 class Event:
     type: EventType
-    """
-        types:
-            - message
-            - tool_call
-            - tool_response
-            - tool_error
-    """
+    content: Any
